@@ -26,18 +26,11 @@ new = stop_words$word
 new = data.frame(new)
 stop_w = rbind(new,"movie", "film", "films", "movies", "acting", "act", "role",
                "actor", "actors", "scenes","scene", "character","br","cast", 
-               "characters", "make", "director")
+               "characters", "make", "director","watch","watching", "10","2")
 colnames(stop_w) <- c("word")
-#stop_words <- rbind(stop_words,c("br","Smart" ))
-#stop_words = c(,"my","custom","words")
+
 ```
 
-```{r}
-view(stopwords("english"))
-view(stop_w)
-?anti_join
-?unnest_tokens
-```
 
 ```{r}
 ##tf-idf
@@ -46,8 +39,6 @@ book_words <- IMDB %>%
   anti_join(stop_w)%>%
   anti_join(stop_words)%>%
   count(docs, word, sort = TRUE)
-
-#book_words = anti_join(stop_w,book_words)
 
 total_words <- book_words %>%
   group_by(docs) %>% 
