@@ -152,6 +152,8 @@ ap_top_terms %>%
   facet_wrap(~ topic, scales = "free", ncol = 5) +
   scale_y_reordered() 
 ```
+## From above Top Term words table 1, we can see that the first movie contains words like story, love and life. We can infer that the type od first movie is family drama or story, which is suitable for families to watch together. However, Top Term words table 2, it contains word "horror" in the second movie, we guess it was a horror movie.
+
 ```{r}
 library(tidyr)
 library(hrbrthemes)
