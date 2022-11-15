@@ -246,8 +246,10 @@ top_terms %>%
 ```
 
 ```{r}
+## We want to know which topics are associated with each document. We can find this by examining the per-document-per-topic probabilities (“gamma”).
 lda_gamma <- tidy(ap_lda, matrix = "gamma")
 
+## First we visualize for all topic and then we visualize the per-document-per-topic probability for each topic.
 ggplot(lda_gamma, aes(gamma)) +
   geom_histogram(alpha = 0.8, col = 'black', fill = 'light blue') + 
   scale_y_log10() +
@@ -264,3 +266,4 @@ ggplot(lda_gamma, aes(gamma, fill = as.factor(topic))) +
   labs(title = "Distribution of probability for each topic",
        y = "Number of documents", x = expression(gamma))
 ```
+## From the each topic visulization plots, we know that in each topic, there are similar distribution.
