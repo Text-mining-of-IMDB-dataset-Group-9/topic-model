@@ -17,13 +17,21 @@ library(stringr)
 library(ggplot2)
 library(topicmodels)
 library(tm)
+## Import the IMDB data, and transfer the type of dataset as tibble.
 IMDB.Dataset <- read_csv("IMDB Dataset.csv", show_col_types = F)
 IMDB <- tibble(IMDB.Dataset)
 
+## Add IMDB data with column docs by using mutate() function.
 IMDB <- IMDB  %>%  mutate(docs = c(1:length(IMDB$review)))
+
+## In order to better analysis our IMDB review words, we apply stop words to delete the words that might distract our evaluation.
+
+## Import stop words data set.
 data(stop_words)
 new = stop_words$word
 new = data.frame(new)
+
+## Combining with our IMDB data set, we use rbind() function to add these specific stop words, which are meaningless or repeated, into stop_word data.
 stop_w = rbind(new,"movie", "film", "films", "movies", "acting", "act", "role",
                "actor", "actors", "scenes","scene", "character","br","cast", 
                "characters", "make", "director", "10", "watch","watching", "2")
