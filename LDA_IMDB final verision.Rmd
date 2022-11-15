@@ -40,8 +40,6 @@ colnames(stop_w) <- c("word")
 #stop_words = c(,"my","custom","words")
 ```
 
-
-
 ```{r}
 ##tf-idf
 book_words <- IMDB %>%
@@ -79,7 +77,8 @@ book_tf_idf_new <- filter(book_tf_idf, tf > 0.1)
 ggplot(book_tf_idf_new, aes(tf, fill = docs)) +
   geom_histogram(show.legend = FALSE, color = 'black', fill = 'light blue') + geom_density(alpha=.2, fill="#FF6666") + labs(title = 'Density of word tf bigger than 0.1')
 ```
-## There is a very long tail to the right of this novel which means existing those extremely rare words!
+
+First, we plot the distribution of term frequency which is larger than 0.1, and we found that there is a very long tail to the right of this novel which means existing those extremely rare words!
 
 ```{r}
 ## We use count() function to find the most common words.
@@ -97,12 +96,15 @@ word_pairs <- book_words %>%
   pairwise_count(word, docs, sort = TRUE, upper = FALSE)
 ```
 
+The idea of tf-idf is to find the important words for the content of each document by decreasing the weight for commonly used words and increasing the weight for words that are not used very much in a collection or corpus of documents.
+
 ```{r}
 ## We use ggplot package to plot the 15 most common words in this review documents.
 df_new <- head(df,15)
 ggplot(df_new, aes(x = n, fill = word)) + geom_histogram() + labs(title = 'Top 15 Most Frequent Words in Reviews')
 ```
-## From the Top 15 Most Frequent Words in Reviews table, we get these words are ACTION, BAD, FUNNY, GAME, HORROR, LOVE, MUSIC, PEOPLE, PLOT, SERIES, STORY, TERRIBLE, TIME, and WORST. From above words, we could give a guess that people probably like watching movies about action, funny, game, love, music and so on. They watch movies with the aime at entertaining rather than learning something new. Or other words, to kill the time, which is also displayed in the Top 15 Most Frequent Words in Reviews table.
+
+From the Top 15 Most Frequent Words in Reviews table, we get these words are ACTION, BAD, FUNNY, GAME, HORROR, LOVE, MUSIC, PEOPLE, PLOT, SERIES, STORY, TERRIBLE, TIME, and WORST. From above words, we could give a guess that people probably like watching movies about action, funny, game, love, music and so on. They watch movies with the aime at entertaining rather than learning something new. Or other words, to kill the time, which is also displayed in the Top 15 Most Frequent Words in Reviews table.
 
 ```{r}
 ## We will again use the ggraph package for visualizing our networks. We plot networks of these co-occurring words so we can see these relationships better.
@@ -119,7 +121,8 @@ word_pairs %>%
                  point.padding = unit(0.2, "lines")) +
   theme_void()
 ```
-## We see some clear clustering in this network of title words; word "time" is at center and is largely organized into several families of words that tend to go together. It is largely proved our guess that people watching movies is aimed at killing their leisure time, so they are prone to these relaxing types of movies.
+
+We see some clear clustering in this network of title words; word "time" is at center and is largely organized into several families of words that tend to go together. It is largely proved our guess that people watching movies is aimed at killing their leisure time, so they are prone to these relaxing types of movies.
 
 ```{r fig.width=6, fig.height=4}
 ###  Latent Dirichlet allocation.
@@ -152,7 +155,8 @@ ap_top_terms %>%
   facet_wrap(~ topic, scales = "free", ncol = 5) +
   scale_y_reordered() 
 ```
-## From above Top Term words table 1, we can see that the first movie contains words like story, love and life. We can infer that the type od first movie is family drama or story, which is suitable for families to watch together. However, Top Term words table 2, it contains word "horror" in the second movie, we guess it was a horror movie.
+
+From above Top Term words table 1, we can see that the first movie contains words like story, love and life. We can infer that the type od first movie is family drama or story, which is suitable for families to watch together. However, Top Term words table 2, it contains word "horror" in the second movie, we guess it was a horror movie.
 
 ```{r}
 library(tidyr)
@@ -178,7 +182,8 @@ ggplot(data = beta_wide, aes(x = x)) + geom_density( aes(x = topic1 , y = ..dens
   theme_ipsum() +
   xlab("value of x")
 ```
-## From the density difference visulization plot, we get that in Topic 2, it is more concertrated at a word and has a higher density, compared with the Topic 1.
+
+From the density difference visulization plot, we get that in Topic 2, it is more concertrated at a word and has a higher density, compared with the Topic 1.
 
 ```{r}
 beta_wide %>%
@@ -210,14 +215,15 @@ ap_top_terms %>%
   facet_wrap(~ topic, scales = "free", ncol = 5) +
   scale_y_reordered() 
 ```
-## We get 10 topic top 10 words. Most of them contain words like time, love, life and so on. 
+
+We get 10 topic top 10 words. Most of them contain words like time, love, life and so on. The β tells us the probability of that term being generated from that topic for that document. It is the probability of that term (word) belonging to that topic. Notice that some of the values for β are very, very low, and some are not so low.
 
 ```{r}
 tidy_lda <- tidy(ap_lda)
 tidy_lda
 ```
 
-##Let's examine the top 10 terms for each topic.
+Let's examine the top 10 terms for each topic.
 
 ```{r}
 top_terms <- tidy_lda %>%
@@ -228,8 +234,6 @@ top_terms <- tidy_lda %>%
 
 top_terms
 ```
-
-
 
 ```{r fig.width=6, fig.height=4}
 top_terms %>%
@@ -266,4 +270,5 @@ ggplot(lda_gamma, aes(gamma, fill = as.factor(topic))) +
   labs(title = "Distribution of probability for each topic",
        y = "Number of documents", x = expression(gamma))
 ```
-## From the each topic visulization plots, we know that in each topic, there are similar distribution.
+
+From the each topic visulization plots, we know that in each topic, there are similar distribution.
