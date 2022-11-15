@@ -192,24 +192,25 @@ beta_wide %>%
 ```
 
 ```{r fig.width=6, fig.height=4}
+## We then use the LDA() function to create a ten-topic model. 
 ap_lda <- LDA(imdb_dtm, k = 10, control = list(seed = 1234))
 
 ap_topics <- tidy(ap_lda, matrix = "beta")
-
+## We use dplyr’s slice_max() to find the top 10 terms within each topic
 ap_top_terms <- ap_topics %>%
   group_by(topic) %>%
   slice_max(beta, n = 10) %>% 
   ungroup() %>%
   arrange(topic, -beta)
-
+## This tidy output lends itself well to a ggplot2 visualization
 ap_top_terms %>%
   mutate(term = reorder_within(term, beta, topic)) %>%
   ggplot(aes(beta, term, fill = factor(topic))) +
   geom_col(show.legend = FALSE) +
   facet_wrap(~ topic, scales = "free", ncol = 5) +
   scale_y_reordered() 
-###
 ```
+## We get 10 topic top 10 words. Most of them contain words like time, love, life and so on. 
 
 ```{r}
 tidy_lda <- tidy(ap_lda)
