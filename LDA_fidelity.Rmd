@@ -1,30 +1,13 @@
 ---
 title: "fidelity LDA"
-author: "Lintong Li, Jiahao Liu, Zijia Wang, Kaiwei Xiao"
+author: "Lintong Li, Jiahao Liu"
 date: "2022-11-12"
-output: pdf_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-## Analysis Report of IMDB data
-
-#### Group 9: Lintong Li, Jiahao Liu, Zijia Wang, Kaiwei Xiao
-
-#### **Introduction**
-
-This is the report which is aimed at analyzing the most common words from IMDB reviews, and then trying to estimate the types of movies among these reviews.
-
-#### Evaluation
-
-First, we plot the distribution of term frequency which is larger than 0.1, and we found that there is a very long tail to the right of this novel which means existing those extremely rare words!
-
-The idea of tf-idf is to find the important words for the content of each document by decreasing the weight for commonly used words and increasing the weight for words that are not used very much in a collection or corpus of documents. Calculating tf-idf attempts to find the words that are important (i.e., common) in a text, but not too common. From the tf_itf table, we know the top 10 words are trivialboring, cognac, smallville, sandra, blahblah, amália, colombo, tarzan.
-
-Then, From df table and networks visulization, we know the most common words are MOVIE, FILM, BAD, MOVIES, STORY, LOVE, FUNNY, TIME, WATCH, SERIES. We can guess the popular movies that people like from the above ten words. People are prone to watching story or series movies, such as Marvel movies. Additionally, we found that people also like to watch funny movies. The reason may be that people are busy today, and they prefer to watching the comedies to entertainment rather than the serious movies like documentary movies.
-
-Finally, we do Latent Dirichlet allocation.
 
 ```{r}
 library(tidyverse)
@@ -34,7 +17,6 @@ library(stringr)
 library(ggplot2)
 library(topicmodels)
 library(tm)
-## Import the data set IMDB
 IMDB.Dataset <- read_csv("IMDB Dataset.csv", show_col_types = F)
 IMDB <- tibble(IMDB.Dataset)
 
@@ -45,19 +27,17 @@ stop_words <- rbind(stop_words,c("br","Smart" ))
 ```
 
 ```{r}
+##tf-idf
 book_words <- IMDB %>%
   unnest_tokens(word, review) %>%
   anti_join(stop_words)%>%
   count(docs, word, sort = TRUE)
 
-## We calculate the total words in each novel here, for later use.
 total_words <- book_words %>% 
   group_by(docs) %>% 
   summarize(total = sum(n))
 
 book_words <- left_join(book_words, total_words)
-
-## Then use row_number() to find the rank and rank column here tells us the rank of each word within the frequency table.
 
 freq_by_rank <- book_words %>% 
   group_by(docs) %>% 
@@ -65,39 +45,22 @@ freq_by_rank <- book_words %>%
          `term frequency` = n/total) %>%
   ungroup()
 
-## first we look at term frequency (tf), which means how frequently a word occurs in a document.
-
-## And term’s inverse document frequency (idf), which decreases the weight for commonly used words and increases the weight for words that are not used very much in a collection of documents. 
-
-## Thirdly, combining with term frequency to calculate a term’s tf-idf (the two quantities multiplied together), the frequency of a term adjusted for how rarely it is used.
-
 book_tf_idf <- book_words %>%
   bind_tf_idf(word, docs, n)
 
-## We want delete the uncommon words that hardly use in this document. So, select the words only with the term frequency is larger than 0.1.
-
 book_tf_idf_new <- filter(book_tf_idf, tf > 0.1)
-
-## We look at the distribution of term frequency(tf), n/total for each novel, the number of times a word appears in a novel divided by the total number of terms (words) in that novel.
 
 ggplot(book_tf_idf_new, aes(tf, fill = docs)) +
   geom_histogram(show.legend = FALSE, color = 'black', fill = 'light blue') + geom_density(alpha=.2, fill="#FF6666") + labs(title = 'Density of word tf bigger than 0.1')
 ```
-## There is a very long tail to the right of this novel which means existing those extremely rare words!
 
 ```{r}
-## We use count() function to find the most common words.
-
 df <- book_tf_idf_new %>% 
   group_by(word) %>% 
   count(sort = TRUE)
 
-## We likely want to change all of the keywords to either lower or upper case to get rid of duplicates like “MOVIE” and “Movie”. 
-
 df <- df %>% 
   mutate(word = toupper(word))
-
-##Then We use pairwise_count() from the widyr package to count how many times each pair of words occurs together in a title or description field.
 
 library(widyr)
 word_pairs <- book_words %>% 
@@ -105,15 +68,12 @@ word_pairs <- book_words %>%
 ```
 
 ```{r}
-## We use ggplot package to plot the 15 most common words in this review documents.
-
 df_new <- head(df,15)
 ggplot(df_new, aes(x = n, fill = word)) + geom_histogram() + labs(title = 'Top 15 most frequent word in reviews')
 ```
 
 
 ```{r}
-## We will again use the ggraph package for visualizing our networks. We plot networks of these co-occurring words so we can see these relationships better
 library(igraph)
 library(ggraph)
 set.seed(1234)
@@ -127,26 +87,21 @@ word_pairs %>%
                  point.padding = unit(0.2, "lines")) +
   theme_void()
 ```
-## We see some clear clustering in this network of title words; words in IMDB dataset titles are largely organized into several families of words that tend to go together.
 
 
 ```{r}
-###  Latent Dirichlet allocation.
+###  LDA
 imdb_dtm <- IMDB %>%
   unnest_tokens(word, review) %>%
   anti_join(stop_words)%>%
   count(docs, word) %>%
   cast_dtm(docs, word, n)
 
-## set a seed so that the output of the model is predictable
-## A LDA_VEM topic model with 20 topics.
-ap_lda <- LDA(imdb_dtm, k = 20, control = list(seed = 1234))
 
-##The tidytext package provides this method for extracting the per-topic-per-word probabilities, called (“beta”), from the model.
+ap_lda <- LDA(imdb_dtm, k = 15, control = list(seed = 1234))
 
 ap_topics <- tidy(ap_lda, matrix = "beta")
 
-## We use dplyr’s slice_max() to find the 10 terms that are most common within each topic. As a tidy data frame, this lends itself well to a ggplot2 visualization
 ap_top_terms <- ap_topics %>%
   group_by(topic) %>%
   slice_max(beta, n = 10) %>% 
@@ -168,8 +123,6 @@ tidy_lda
 ```
 ###Let’s examine the top 10 terms for each topic.
 ```{r}
-## We use dplyr’s slice_max() to find the 10 terms that are most common within each topic. 
-
 top_terms <- tidy_lda %>%
   group_by(topic) %>%
   slice_max(beta, n = 10, with_ties = FALSE) %>%
@@ -179,9 +132,6 @@ top_terms <- tidy_lda %>%
 top_terms
 ```
 ```{r}
-
-## This visualization lets us understand the two topics that were extracted from the articles.
-
 top_terms %>%
   mutate(term = reorder_within(term, beta, topic)) %>%
   group_by(topic, term) %>%    
@@ -192,12 +142,9 @@ top_terms %>%
   scale_y_reordered() +
   labs(title = "Top 10 terms in each LDA topic",
        x = expression(beta), y = NULL) +
-  facet_wrap(~ topic, ncol = 4, scales = "free")
+  facet_wrap(~ topic, ncol = 3, scales = "free")
 ```
 ```{r}
-
-## Besides estimating each topic as a mixture of words, LDA also models each document as a mixture of topics. We can examine the per-document-per-topic probabilities, called (“gamma”), with the matrix = "gamma" argument to tidy().
-
 lda_gamma <- tidy(ap_lda, matrix = "gamma")
 
 ggplot(lda_gamma, aes(gamma)) +
@@ -205,12 +152,11 @@ ggplot(lda_gamma, aes(gamma)) +
   scale_y_log10() +
   labs(title = "Distribution of probabilities for all topics",
        y = "Number of documents", x = expression(gamma))
-
 ```
 ```{r}
 ggplot(lda_gamma, aes(gamma, fill = as.factor(topic))) +
   geom_histogram(alpha = 0.8, show.legend = FALSE) +
-  facet_wrap(~ topic, ncol = 4) +
+  facet_wrap(~ topic, ncol = 3) +
   scale_y_log10() +
   labs(title = "Distribution of probability for each topic",
        y = "Number of documents", x = expression(gamma))
