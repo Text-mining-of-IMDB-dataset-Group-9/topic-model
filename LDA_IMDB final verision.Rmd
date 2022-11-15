@@ -100,8 +100,9 @@ word_pairs <- book_words %>%
 ```{r}
 ## We use ggplot package to plot the 15 most common words in this review documents.
 df_new <- head(df,15)
-ggplot(df_new, aes(x = n, fill = word)) + geom_histogram() + labs(title = 'Top 15 most frequent word in reviews')
+ggplot(df_new, aes(x = n, fill = word)) + geom_histogram() + labs(title = 'Top 15 Most Frequent Words in Reviews')
 ```
+## From the Top 15 Most Frequent Words in Reviews table, we get these words are ACTION, BAD, FUNNY, GAME, HORROR, LOVE, MUSIC, PEOPLE, PLOT, SERIES, STORY, TERRIBLE, TIME, and WORST. From above words, we could give a guess that people probably like watching movies about action, funny, game, love, music and so on. They watch movies with the aime at entertaining rather than learning something new. Or other words, to kill the time, which is also displayed in the Top 15 Most Frequent Words in Reviews table.
 
 ```{r}
 ## We will again use the ggraph package for visualizing our networks. We plot networks of these co-occurring words so we can see these relationships better.
