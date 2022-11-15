@@ -1,3 +1,2 @@
 # topic-model
-
-contributer: Lintong Li, Jiahao Liu, Kaiwei Xiao, Zijia Wang
+##Author: "Lintong Li, Jiahao Liu, Zijia Wang, Kaiwei Xiao"
