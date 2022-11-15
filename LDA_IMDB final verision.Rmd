@@ -50,27 +50,36 @@ book_words <- IMDB %>%
   anti_join(stop_words)%>%
   count(docs, word, sort = TRUE)
 
-
+## We calculate the total words in each novel here, for later use.
 total_words <- book_words %>%
   group_by(docs) %>% 
   summarize(total = sum(n))
 
 book_words <- left_join(book_words, total_words)
 
+## Then use row_number() to find the rank and rank column here tells us the rank of each word within the frequency table.
 freq_by_rank <- book_words %>% 
   group_by(docs) %>% 
   mutate(rank = row_number(), 
          `term frequency` = n/total) %>%
   ungroup()
 
+## First we look at term frequency (tf), which means how frequently a word occurs in a document.
+
+## And term’s inverse document frequency (idf), which decreases the weight for commonly used words and increases the weight for words that are not used very much in a collection of documents. 
+
+## Thirdly, combining with term frequency to calculate a term’s tf-idf (the two quantities multiplied together), the frequency of a term adjusted for how rarely it is used.
 book_tf_idf <- book_words %>%
   bind_tf_idf(word, docs, n)
 
+## We want delete the uncommon words that hardly use in this document. So, select the words only with the term frequency is larger than 0.1.
 book_tf_idf_new <- filter(book_tf_idf, tf > 0.1)
 
+## We look at the distribution of term frequency(tf), n/total for each novel, the number of times a word appears in a novel divided by the total number of terms (words) in that novel.
 ggplot(book_tf_idf_new, aes(tf, fill = docs)) +
   geom_histogram(show.legend = FALSE, color = 'black', fill = 'light blue') + geom_density(alpha=.2, fill="#FF6666") + labs(title = 'Density of word tf bigger than 0.1')
 ```
+## There is a very long tail to the right of this novel which means existing those extremely rare words!
 
 ```{r}
 df <- book_tf_idf_new %>% 
