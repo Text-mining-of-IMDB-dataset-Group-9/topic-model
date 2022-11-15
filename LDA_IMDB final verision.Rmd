@@ -214,7 +214,7 @@ ap_top_terms %>%
   mutate(term = reorder_within(term, beta, topic)) %>%
   ggplot(aes(beta, term, fill = factor(topic))) +
   geom_col(show.legend = FALSE) +
-  facet_wrap(~ topic, scales = "free", ncol = 5) +
+  facet_wrap(~ topic, scales = "free", ncol = 4) +
   scale_y_reordered() 
 ```
 
@@ -248,7 +248,7 @@ top_terms %>%
   scale_y_reordered() +
   labs(title = "Top 10 terms in each LDA topic",
        x = expression(beta), y = NULL) +
-  facet_wrap(~ topic, ncol = 5, scales = "free")
+  facet_wrap(~ topic, ncol = 4, scales = "free")
 ```
 
 ```{r}
