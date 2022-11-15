@@ -2,7 +2,9 @@
 title: "fidelity LDA"
 author: "Lintong Li, Jiahao Liu，Kaiwei Xiao, Zijia Wang"
 date: "2022-11-12"
-output: pdf_document
+output:
+  word_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
