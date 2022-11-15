@@ -1,0 +1,182 @@
+---
+title: "fidelity LDA"
+author: "Lintong Li, Jiahao Liu，Kaiwei Xiao, Zijia Wang"
+date: "2022-11-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tidytext)
+library(janeaustenr)
+library(stringr)
+library(ggplot2)
+library(topicmodels)
+library(tm)
+IMDB.Dataset <- read_csv("IMDB Dataset.csv", show_col_types = F)
+IMDB <- tibble(IMDB.Dataset)
+
+IMDB <- IMDB  %>%  mutate(docs = c(1:length(IMDB$review)))
+data(stop_words)
+new = stop_words$word
+new = data.frame(new)
+stop_w = rbind(new,"movie", "film", "films", "movies", "acting", "act", "role",
+               "actor", "actors", "scenes","scene", "character","br","cast", 
+               "characters", "make", "director","watch","watching", "10","2")
+colnames(stop_w) <- c("word")
+
+```
+
+
+```{r}
+##tf-idf
+book_words <- IMDB %>%
+  unnest_tokens(word, review) %>%
+  anti_join(stop_w)%>%
+  anti_join(stop_words)%>%
+  count(docs, word, sort = TRUE)
+
+total_words <- book_words %>%
+  group_by(docs) %>% 
+  summarize(total = sum(n))
+
+book_words <- left_join(book_words, total_words)
+
+freq_by_rank <- book_words %>% 
+  group_by(docs) %>% 
+  mutate(rank = row_number(), 
+         `term frequency` = n/total) %>%
+  ungroup()
+
+book_tf_idf <- book_words %>%
+  bind_tf_idf(word, docs, n)
+
+book_tf_idf_new <- filter(book_tf_idf, tf > 0.1)
+
+ggplot(book_tf_idf_new, aes(tf, fill = docs)) +
+  geom_histogram(show.legend = FALSE, color = 'black', fill = 'light blue') + geom_density(alpha=.2, fill="#FF6666") + labs(title = 'Density of word tf bigger than 0.1')
+```
+
+```{r}
+df <- book_tf_idf_new %>% 
+  group_by(word) %>% 
+  count(sort = TRUE)
+
+df <- df %>% 
+  mutate(word = toupper(word))
+
+library(widyr)
+word_pairs <- book_words %>% 
+  pairwise_count(word, docs, sort = TRUE, upper = FALSE)
+```
+
+```{r}
+df_new <- head(df,15)
+ggplot(df_new, aes(x = n, fill = word)) + geom_histogram() + labs(title = 'Top 15 most frequent word in reviews')
+```
+
+```{r}
+library(igraph)
+library(ggraph)
+set.seed(1234)
+word_pairs %>%
+  filter(n >= 1800) %>%
+  graph_from_data_frame() %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = n, edge_width = n), edge_colour = "cyan4") +
+  geom_node_point(size = 5) +
+  geom_node_text(aes(label = name), repel = TRUE, 
+                 point.padding = unit(0.2, "lines")) +
+  theme_void()
+```
+
+```{r}
+git remote set-url origin git@github.com:username/repo.git
+```
+
+
+
+```{r fig.width=6, fig.height=4}
+###  LDA
+imdb_dtm <- IMDB %>%
+  unnest_tokens(word, review) %>%
+  anti_join(stop_w)%>%
+  count(docs, word) %>%
+  cast_dtm(docs, word, n)
+
+
+ap_lda <- LDA(imdb_dtm, k = 10, control = list(seed = 1234))
+
+ap_topics <- tidy(ap_lda, matrix = "beta")
+
+ap_top_terms <- ap_topics %>%
+  group_by(topic) %>%
+  slice_max(beta, n = 10) %>% 
+  ungroup() %>%
+  arrange(topic, -beta)
+
+ap_top_terms %>%
+  mutate(term = reorder_within(term, beta, topic)) %>%
+  ggplot(aes(beta, term, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free", ncol = 5) +
+  scale_y_reordered() 
+###
+```
+
+```{r}
+tidy_lda <- tidy(ap_lda)
+tidy_lda
+```
+
+##Let's examine the top 10 terms for each topic.
+
+```{r}
+top_terms <- tidy_lda %>%
+  group_by(topic) %>%
+  slice_max(beta, n = 10, with_ties = FALSE) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+
+top_terms
+```
+
+
+
+```{r fig.width=6, fig.height=4}
+top_terms %>%
+  mutate(term = reorder_within(term, beta, topic)) %>%
+  group_by(topic, term) %>%    
+  arrange(desc(beta)) %>%  
+  ungroup() %>%
+  ggplot(aes(beta, term, fill = as.factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  scale_y_reordered() +
+  labs(title = "Top 10 terms in each LDA topic",
+       x = expression(beta), y = NULL) +
+  facet_wrap(~ topic, ncol = 5, scales = "free")
+```
+
+```{r}
+lda_gamma <- tidy(ap_lda, matrix = "gamma")
+
+ggplot(lda_gamma, aes(gamma)) +
+  geom_histogram(alpha = 0.8, col = 'black', fill = 'light blue') + 
+  scale_y_log10() +
+  labs(title = "Distribution of probabilities for all topics",
+       y = "Number of documents", x = expression(gamma))
+
+```
+
+```{r fig.width=8, fig.height=8}
+ggplot(lda_gamma, aes(gamma, fill = as.factor(topic))) +
+  geom_histogram(alpha = 0.8, show.legend = FALSE) +
+  facet_wrap(~ topic, ncol = 4) +
+  scale_y_log10() +
+  labs(title = "Distribution of probability for each topic",
+       y = "Number of documents", x = expression(gamma))
+```
