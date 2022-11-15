@@ -82,24 +82,29 @@ ggplot(book_tf_idf_new, aes(tf, fill = docs)) +
 ## There is a very long tail to the right of this novel which means existing those extremely rare words!
 
 ```{r}
+## We use count() function to find the most common words.
 df <- book_tf_idf_new %>% 
   group_by(word) %>% 
   count(sort = TRUE)
 
+## We likely want to change all of the keywords to either lower or upper case to get rid of duplicates like “MOVIE” and “Movie”. 
 df <- df %>% 
   mutate(word = toupper(word))
 
+##Then We use pairwise_count() from the widyr package to count how many times each pair of words occurs together in a title or description field.
 library(widyr)
 word_pairs <- book_words %>% 
   pairwise_count(word, docs, sort = TRUE, upper = FALSE)
 ```
 
 ```{r}
+## We use ggplot package to plot the 15 most common words in this review documents.
 df_new <- head(df,15)
 ggplot(df_new, aes(x = n, fill = word)) + geom_histogram() + labs(title = 'Top 15 most frequent word in reviews')
 ```
 
 ```{r}
+## We will again use the ggraph package for visualizing our networks. We plot networks of these co-occurring words so we can see these relationships better.
 library(igraph)
 library(ggraph)
 set.seed(1234)
@@ -113,9 +118,10 @@ word_pairs %>%
                  point.padding = unit(0.2, "lines")) +
   theme_void()
 ```
+## We see some clear clustering in this network of title words; words in IMDB dataset titles are largely organized into several families of words that tend to go together.
 
 ```{r fig.width=6, fig.height=4}
-### LDA
+###  Latent Dirichlet allocation.
 imdb_dtm <- IMDB %>%
   unnest_tokens(word, review) %>%
   anti_join(stop_w)%>%
@@ -124,11 +130,14 @@ imdb_dtm <- IMDB %>%
 ```
 
 ```{r}
-# set a seed so that the output of the model is predictable
+## set a seed so that the output of the model is predictable
+## A LDA_VEM topic model with 2 topics.
 ap_lda <- LDA(imdb_dtm, k = 2, control = list(seed = 1234))
 
+##The tidytext package provides this method for extracting the per-topic-per-word probabilities, called (“beta”), from the model.
 ap_topics <- tidy(ap_lda, matrix = "beta")
 
+## We use dplyr’s slice_max() to find the 10 terms that are most common within each topic. As a tidy data frame, this lends itself well to a ggplot2 visualization.
 ap_top_terms <- ap_topics %>%
   group_by(topic) %>%
   slice_max(beta, n = 10) %>% 
