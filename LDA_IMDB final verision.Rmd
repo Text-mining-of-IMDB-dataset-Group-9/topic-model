@@ -119,7 +119,7 @@ word_pairs %>%
                  point.padding = unit(0.2, "lines")) +
   theme_void()
 ```
-## We see some clear clustering in this network of title words; words in IMDB dataset titles are largely organized into several families of words that tend to go together.
+## We see some clear clustering in this network of title words; word "time" is at center and is largely organized into several families of words that tend to go together. It is largely proved our guess that people watching movies is aimed at killing their leisure time, so they are prone to these relaxing types of movies.
 
 ```{r fig.width=6, fig.height=4}
 ###  Latent Dirichlet allocation.
