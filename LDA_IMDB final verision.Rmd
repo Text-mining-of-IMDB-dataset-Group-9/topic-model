@@ -161,6 +161,8 @@ library(hrbrthemes)
 ap_topics <- tidy(ap_lda, matrix = "beta")
 ap_topics
 
+## Consider the terms that had the greatest difference in beta between topic 1 and topic 2. This can be estimated based on the log ratio of the two.
+## We visualize the words with the greatest differences between the two topics.
 beta_wide <- ap_topics %>%
   mutate(topic = paste0("topic", topic)) %>%
   pivot_wider(names_from = topic, values_from = beta) %>% 
@@ -176,10 +178,9 @@ ggplot(data = beta_wide, aes(x = x)) + geom_density( aes(x = topic1 , y = ..dens
   theme_ipsum() +
   xlab("value of x")
 ```
+## From the density difference visulization plot, we get that in Topic 2, it is more concertrated at a word and has a higher density, compared with the Topic 1.
 
 ```{r}
-## Consider the terms that had the greatest difference in beta between topic 1 and topic 2. This can be estimated based on the log ratio of the two.
-## We visualize the words with the greatest differences between the two topics.
 beta_wide %>%
   group_by(direction = log_ratio > 0) %>%
   slice_max(abs(log_ratio), n = 10) %>% 
